@@ -11,3 +11,6 @@ aruco marker를 opencv로 읽어오는 코드를 활용했습니다.
 
 255번째 줄 
 visMarker.id = 1;을 visMarker.id = markers[i].id;로 수정해서 id로 구분할 수 있도록 변경하여 사용했습니다.
+
+# conversion_Q2E_code
+쿼터니언에서 오일러 각도로 변환하는 코드 추가
