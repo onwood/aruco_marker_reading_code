@@ -7,11 +7,16 @@
 #include <math.h>
 
 ros::Publisher pub;
+int sleep_cnt = 0;
 
 void msgCallback(const visualization_msgs::Marker::ConstPtr&msg)
 {   
-    
-	int id = msg->id;
+	ros::NodeHandle nh;    
+    pub = nh.advertise<geometry_msgs::Twist>("/turtle1/cmd_vel",100);
+    geometry_msgs::Twist pub_msg;
+    ros::Rate r(1);
+
+    int id = msg->id;
     double point_x = msg->pose.position.x;
 	double point_y = msg->pose.position.y;
     double point_z = msg->pose.position.z;
@@ -19,9 +24,18 @@ void msgCallback(const visualization_msgs::Marker::ConstPtr&msg)
     double ori_y = msg->pose.orientation.y;
     double ori_z = msg->pose.orientation.z;
     double ori_w = msg->pose.orientation.w;
-    double point_z_tmp;
-
     double roll, pitch, yaw;
+    
+    if (sleep_cnt > 10)
+    {
+        sleep_cnt = 0;
+        id = 0;
+        // point_z = 1;
+        //for문 쓰면 어떨까
+        pub_msg.linear.x = 1;
+        pub.publish(pub_msg);
+        ROS_INFO("ssssssssssssssssssssssssss");        
+    }
 
     // struct Quaternion {
     //     double w, x, y, z;
@@ -68,52 +82,60 @@ void msgCallback(const visualization_msgs::Marker::ConstPtr&msg)
     ROS_INFO("pitch = %f", pitch);
     ROS_INFO("yaw = %f", yaw);
 
-    ros::NodeHandle nh;    
-    pub = nh.advertise<geometry_msgs::Twist>("/turtle1/cmd_vel",100);
-    geometry_msgs::Twist pub_msg;
-    ros::Rate r(0.001);
+// 경로 ID 받음
+// 아이디 묶음 전달용
 
-    if (id == 3)
-    {
-        if (point_x > 0.02)
+
+//알고리즘 하나
+
+
+    // ros::NodeHandle nh;    
+    // pub = nh.advertise<geometry_msgs::Twist>("/turtle1/cmd_vel",100);
+    // geometry_msgs::Twist pub_msg;
+    // ros::Rate r(10);
+
+        if (id == 3)
         {
-            ROS_INFO("turn right");
-            pub_msg.linear.x = 0;
-            pub_msg.angular.z = -5;
-            pub.publish(pub_msg);
-        }
-        else if (point_x < -0.02)
-        {
-            ROS_INFO("turn left");
-            pub_msg.linear.x = 0;
-            pub_msg.angular.z = 5;
-            pub.publish(pub_msg);
-        }
-        else // if ((point_x <= 0.02) && (point_x >= -0.02))
-        {
-            if (point_z < 1)
+            if (point_x > 0.02)
             {
-                ROS_INFO("stop");
+                ROS_INFO("turn right");
                 pub_msg.linear.x = 0;
-                pub_msg.angular.z = 0;
+                pub_msg.angular.z = -5;
                 pub.publish(pub_msg);
             }
-            else
+            else if (point_x < -0.02)
             {
-                ROS_INFO("stop turning and go forward");
-                pub_msg.linear.x = 1;
-                pub_msg.angular.z = 0;
+                ROS_INFO("turn left");
+                pub_msg.linear.x = 0;
+                pub_msg.angular.z = 5;
                 pub.publish(pub_msg);
-                r.sleep();
+            }
+            else // if ((point_x <= 0.02) && (point_x >= -0.02))
+            {
+                if (point_z < 1)
+                {
+                    ROS_INFO("stop");
+                    pub_msg.linear.x = 0;
+                    pub_msg.angular.z = 0;
+                    pub.publish(pub_msg);
+                }
+                else
+                {
+                    ROS_INFO("stop turning and go forward");
+                    pub_msg.linear.x = 1;
+                    pub_msg.angular.z = 0;
+                    pub.publish(pub_msg);
+                }
             }
         }
-    }
-    else
-    {
-        ROS_INFO("Go foward");
-        pub_msg.linear.x = 1;
-        pub.publish(pub_msg);
-    }
+        else
+        {
+            ROS_INFO("Go foward");
+            pub_msg.linear.x = 1;
+            pub.publish(pub_msg);
+        }
+    r.sleep();
+    sleep_cnt++;
     //     if (point_z < 1) 
     //     {
     //         ROS_INFO("stop");
@@ -141,19 +163,24 @@ void msgCallback(const visualization_msgs::Marker::ConstPtr&msg)
 
 int main(int argc, char **argv)
 {
-	ros::init(argc,argv,"save_marker");
+	// bool flag;
+
+    ros::init(argc,argv,"save_marker");
 	
 	ros::NodeHandle nh;
     // pub = nh.advertise<geometry_msgs::Twist>("/turtle1/cmd_vel",100);
     // geometry_msgs::Twist pub_msg;
     // ros::Rate r(100000);
-    // while (ros::ok())
+    // while (flag==0)
     // {
-    //     pub_msg.linear.x = 1;
-    //     pub.publish(pub_msg);
-    //     ROS_INFO("whatever go");
-    //     ros::Subscriber sub = nh.subscribe("/aruco_single/marker",10,msgCallback);
-    //     ros::spin();
+        // pub_msg.linear.x = 1;
+        // pub.publish(pub_msg);
+        // ROS_INFO("whatever go");
+    //     if(flag==1)
+    //     {
+    //         ros::Subscriber sub = nh.subscribe("/aruco_single/marker",10,msgCallback);
+    //         ros::spin();
+    //     }
     // } 
     ros::Subscriber sub = nh.subscribe("/aruco_single/marker",10,msgCallback);	
 
