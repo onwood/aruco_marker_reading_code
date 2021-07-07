@@ -33,5 +33,6 @@
     </node>
 
 	<node pkg="marker_pose" type="save_marker" name="save_marker" output="screen" />
+	<node pkg="scout_base" type="scout_base_node" name="scout_base_node" />
 </launch>
 

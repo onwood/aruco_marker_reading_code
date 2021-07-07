@@ -1,10 +1,12 @@
 #include "ros/ros.h"
 #include "visualization_msgs/Marker.h"
+#include "geometry_msgs/Twist.h"
 
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <math.h>
 
+ros::Publisher pub;
 
 void msgCallback(const visualization_msgs::Marker::ConstPtr&msg)
 {   
@@ -17,6 +19,7 @@ void msgCallback(const visualization_msgs::Marker::ConstPtr&msg)
     double ori_y = msg->pose.orientation.y;
     double ori_z = msg->pose.orientation.z;
     double ori_w = msg->pose.orientation.w;
+    double point_z_tmp;
 
     double roll, pitch, yaw;
 
@@ -65,18 +68,75 @@ void msgCallback(const visualization_msgs::Marker::ConstPtr&msg)
     ROS_INFO("pitch = %f", pitch);
     ROS_INFO("yaw = %f", yaw);
 
-    if (point_x > 0)
+    ros::NodeHandle nh;    
+    pub = nh.advertise<geometry_msgs::Twist>("/turtle1/cmd_vel",100);
+    geometry_msgs::Twist pub_msg;
+    ros::Rate r(0.001);
+
+    if (id == 3)
     {
-        ROS_INFO("turn right");
+        if (point_x > 0.02)
+        {
+            ROS_INFO("turn right");
+            pub_msg.linear.x = 0;
+            pub_msg.angular.z = -5;
+            pub.publish(pub_msg);
+        }
+        else if (point_x < -0.02)
+        {
+            ROS_INFO("turn left");
+            pub_msg.linear.x = 0;
+            pub_msg.angular.z = 5;
+            pub.publish(pub_msg);
+        }
+        else // if ((point_x <= 0.02) && (point_x >= -0.02))
+        {
+            if (point_z < 1)
+            {
+                ROS_INFO("stop");
+                pub_msg.linear.x = 0;
+                pub_msg.angular.z = 0;
+                pub.publish(pub_msg);
+            }
+            else
+            {
+                ROS_INFO("stop turning and go forward");
+                pub_msg.linear.x = 1;
+                pub_msg.angular.z = 0;
+                pub.publish(pub_msg);
+                r.sleep();
+            }
+        }
     }
     else
     {
-        ROS_INFO("turn left");
-    }
-    if (point_z > 0)
-    {
         ROS_INFO("Go foward");
+        pub_msg.linear.x = 1;
+        pub.publish(pub_msg);
     }
+    //     if (point_z < 1) 
+    //     {
+    //         ROS_INFO("stop");
+    //         // r.sleep();
+    //         pub_msg.linear.x = 0;
+    //         pub.publish(pub_msg);
+    //     }
+    //     else
+    //     {
+    //         ROS_INFO("Go foward");
+    //         pub_msg.linear.x = 1;
+    //         pub.publish(pub_msg);
+    //     }
+
+    // if (point_z == point_z_tmp)
+    // {
+    //     ROS_INFO("Go foward");
+    //     pub_msg.linear.x = 1;
+    //     pub.publish(pub_msg);
+    // }    
+      
+    // point_z_tmp = point_z;
+    // ROS_INFO("tmp=%d",point_z_tmp);
 }
 
 int main(int argc, char **argv)
@@ -84,8 +144,18 @@ int main(int argc, char **argv)
 	ros::init(argc,argv,"save_marker");
 	
 	ros::NodeHandle nh;
-	
-	ros::Subscriber sub = nh.subscribe("/aruco_single/marker",10,msgCallback);	
+    // pub = nh.advertise<geometry_msgs::Twist>("/turtle1/cmd_vel",100);
+    // geometry_msgs::Twist pub_msg;
+    // ros::Rate r(100000);
+    // while (ros::ok())
+    // {
+    //     pub_msg.linear.x = 1;
+    //     pub.publish(pub_msg);
+    //     ROS_INFO("whatever go");
+    //     ros::Subscriber sub = nh.subscribe("/aruco_single/marker",10,msgCallback);
+    //     ros::spin();
+    // } 
+    ros::Subscriber sub = nh.subscribe("/aruco_single/marker",10,msgCallback);	
 
 	ros::spin();
 
